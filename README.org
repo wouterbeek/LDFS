@@ -1,0 +1,4 @@
+#+TITLE: Linked Data File System (LDFS)
+#+AUTHOR: Wouter Beek
+
+A file-based infrastructure for large-scale Linked Data processing.
