@@ -57,11 +57,13 @@
 
 ldfs_compile :-
   aggregate_all(
-    set(File),
+    set(File1),
     (
       member(Local, ['data.nq.gz','meta.nq.gz']),
-      ldfs_file(Local, File),
-      \+ is_empty_file(File)
+      ldfs_file(Local, File1),
+      \+ is_empty_file(File1),
+      hdt_file_name(File1, File2),
+      \+ exists_file(File2)
     ),
     Files
   ),
