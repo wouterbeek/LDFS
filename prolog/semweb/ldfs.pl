@@ -7,6 +7,7 @@
     ldfs_directory/1,      % -Directory
     ldfs_directory/2,      % +Prefix, -Directory
     ldfs_directory_hash/2, % ?Directory, ?Hash
+    ldfs_is_finished/1,    % +Directory
     ldfs_file/2,           % ?Local, -File
     ldfs_file/3,           % +Prefix, ?Local, -File
     ldfs_meta/3,           % ?S, ?P, ?O
@@ -90,7 +91,7 @@ ldfs_data(S, P, O, Prefix) :-
 
 ldfs_directory(Dir) :-
   ground(Dir), !,
-  is_finished_(Dir),
+  ldfs_is_finished(Dir),
   file_directory_name(Dir, Dir0),
   file_directory_name(Dir0, Root),
   root_(Root).
@@ -98,7 +99,7 @@ ldfs_directory(Dir) :-
   root_(Root),
   directory_subdirectory(Root, Dir0),
   directory_subdirectory(Dir0, Dir),
-  is_finished_(Dir).
+  ldfs_is_finished(Dir).
 
 
 
@@ -147,6 +148,14 @@ ldfs_directory_hash(Dir4, Hash) :-
   directory_file_path(Root, Dir3, Dir4).
 ldfs_directory_hash(Dir, Hash) :-
   instantiation_error(args([Dir,Hash])).
+
+
+
+%! ldfs_is_finished(+Directory:atom) is semidet.
+
+ldfs_is_finished(Dir) :-
+  directory_file_path(Dir, finished, File),
+  exists_file(File).
 
 
 
@@ -206,14 +215,6 @@ ldfs_next(Hash1, Hash2) :-
 
 
 % HELPERS %
-
-%! is_finished_(+Directory:atom) is semidet.
-
-is_finished_(Dir) :-
-  directory_file_path(Dir, finished, File),
-  exists_file(File).
-
-
 
 %! root_(+Root:atom) is semidet.
 %! root_(-Root:atom) is det.

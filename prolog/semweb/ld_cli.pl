@@ -169,12 +169,13 @@ pp_directory(Dir) :-
 %! pp_hash_directory(+Prefix:atom, +Directory:atom) is det.
 
 pp_hash_directory(Prefix, Dir) :-
+  ldfs_is_finished(Dir),
   format(current_output, "  ", []),
   ldfs_directory_hash(Dir, Hash),
   atom_concat(Prefix, Rest, Hash),
-  directory_file_path(Dir, done, Done),
-  (exists_file(Done) -> Color = green ; Color = red),
-  ansi_format([fg(Color)], "~a|~a:  ", [Prefix,Rest]),
+  ansi_format([fg(green)], "~a|", [Prefix]),
+  ansi_format([fg(red)], "~a", [Rest]),
+  ansi_format([fg(green)], ":  ", []),
   pp_directory(Dir),
   nl.
 
