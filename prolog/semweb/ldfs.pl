@@ -2,15 +2,16 @@
   ldfs,
   [
     ldfs_compile/0,
-    ldfs_data/3,      % ?S, ?P, ?O
-    ldfs_data/4,      % ?S, ?P, ?O, ?Prefix
-    ldfs_directory/1, % -Directory
-    ldfs_directory/2, % +Prefix, -Directory
-    ldfs_file/2,      % ?Local, -File
-    ldfs_file/3,      % +Prefix, ?Local, -File
-    ldfs_meta/3,      % ?S, ?P, ?O
-    ldfs_meta/4,      % ?S, ?P, ?O, ?Prefix
-    ldfs_next/2       % +Hash1, -Hash2
+    ldfs_data/3,           % ?S, ?P, ?O
+    ldfs_data/4,           % ?S, ?P, ?O, ?Prefix
+    ldfs_directory/1,      % -Directory
+    ldfs_directory/2,      % +Prefix, -Directory
+    ldfs_directory_hash/2, % ?Directory, ?Hash
+    ldfs_file/2,           % ?Local, -File
+    ldfs_file/3,           % +Prefix, ?Local, -File
+    ldfs_meta/3,           % ?S, ?P, ?O
+    ldfs_meta/4,           % ?S, ?P, ?O, ?Prefix
+    ldfs_next/2            % +Hash1, -Hash2
   ]
 ).
 
@@ -29,15 +30,15 @@
 
 :- use_module(library(conf_ext)).
 :- use_module(library(file_ext)).
-:- use_module(library(sw/hdt_api)).
-:- use_module(library(sw/rdf_prefix)).
-:- use_module(library(sw/rdf_term)).
+:- use_module(library(semweb/hdt_api)).
+:- use_module(library(semweb/rdf_prefix)).
+:- use_module(library(semweb/rdf_term)).
 :- use_module(library(thread_ext)).
 
 :- initialization
    init_ldfs.
 
-:- maplist(rdf_assert_prefix, [
+:- maplist(rdf_register_prefix, [
      ll-'https://lodlaundromat.org/def/'
    ]).
 
@@ -128,6 +129,27 @@ ldfs_directory(Prefix, Dir2) :-
 
 
 
+%! ldfs_directory_hash(+Directory:atom, +Hash:atom) is semidet.
+%! ldfs_directory_hash(+Directory:atom, -Hash:atom) is semidet.
+%! ldfs_directory_hash(-Directory:atom, +Hash:atom) is semidet.
+
+ldfs_directory_hash(Dir, Hash) :-
+  ground(Dir), !,
+  directory_subdirectories(Dir, Segments),
+  reverse(Segments, [Postfix,Prefix|_]),
+  atom_concat(Prefix, Postfix, Hash).
+ldfs_directory_hash(Dir4, Hash) :-
+  ground(Hash), !,
+  atom_codes(Hash, [H1,H2|T]),
+  maplist(atom_codes, [Dir1,Dir2], [[H1,H2],T]),
+  append_directories(Dir1, Dir2, Dir3),
+  ldfs_directory(Root),
+  directory_file_path(Root, Dir3, Dir4).
+ldfs_directory_hash(Dir, Hash) :-
+  instantiation_error(args([Dir,Hash])).
+
+
+
 %! ldfs_file(+Local:atom, +File:atom) is semidet.
 %! ldfs_file(+Local:atom, -File:atom) is nondet.
 
@@ -170,13 +192,14 @@ ldfs_meta(S, P, O, Prefix) :-
 ldfs_next(Hash1, Hash2) :-
   ground(Hash1), !,
   ldfs_meta(_, ll:entry, Entry, Hash1),
-  rdf_global_id(graph:Hash2, Entry).
+  rdf_prefix_iri(graph:Hash2, Entry).
 ldfs_next(Hash1, Hash2) :-
   ground(Hash2), !,
   ldfs_meta(Archive, ll:entry, _, Hash2),
-  rdf_global_id(graph:Hash1, Archive).
+  rdf_prefix_iri(graph:Hash1, Archive).
 ldfs_next(Hash1, Hash2) :-
   instantiation_error(args([Hash1,Hash2])).
+
 
 
 
