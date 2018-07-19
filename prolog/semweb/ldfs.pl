@@ -10,9 +10,11 @@
     ldfs_is_finished/1,    % +Directory
     ldfs_file/2,           % ?Local, -File
     ldfs_file/3,           % +Prefix, ?Local, -File
+    ldfs_file_line/3,      % +Prefix, +Local, -Line
     ldfs_meta/3,           % ?S, ?P, ?O
     ldfs_meta/4,           % ?S, ?P, ?O, ?Prefix
-    ldfs_next/2            % +Hash1, -Hash2
+    ldfs_next/2,           % +Hash1, -Hash2
+    ldfs_root/1            % ?Directory
   ]
 ).
 
@@ -26,6 +28,7 @@
 :- use_module(library(apply)).
 :- use_module(library(error)).
 :- use_module(library(lists)).
+:- use_module(library(readutil)).
 :- use_module(library(settings)).
 :- use_module(library(yall)).
 
@@ -94,9 +97,9 @@ ldfs_directory(Dir) :-
   ldfs_is_finished(Dir),
   file_directory_name(Dir, Dir0),
   file_directory_name(Dir0, Root),
-  root_(Root).
+  ldfs_root(Root).
 ldfs_directory(Dir) :-
-  root_(Root),
+  ldfs_root(Root),
   directory_subdirectory(Root, Dir0),
   directory_subdirectory(Dir0, Dir),
   ldfs_is_finished(Dir).
@@ -110,7 +113,7 @@ ldfs_directory('', Dir) :- !,
   ldfs_directory(Dir).
 ldfs_directory(Prefix, Dir2) :-
   atom_length(Prefix, PrefixLength),
-  root_(Root),
+  ldfs_root(Root),
   (   % Hash falls within the first two characters (outer directory).
       PrefixLength =< 2
   ->  atom_concat(Prefix, *, Wildcard0),
@@ -139,13 +142,12 @@ ldfs_directory_hash(Dir, Hash) :-
   directory_subdirectories(Dir, Segments),
   reverse(Segments, [Postfix,Prefix|_]),
   atom_concat(Prefix, Postfix, Hash).
-ldfs_directory_hash(Dir4, Hash) :-
+ldfs_directory_hash(Dir, Hash) :-
   ground(Hash), !,
+  ldfs_directory(Dir1),
   atom_codes(Hash, [H1,H2|T]),
-  maplist(atom_codes, [Dir1,Dir2], [[H1,H2],T]),
-  append_directories(Dir1, Dir2, Dir3),
-  ldfs_directory(Root),
-  directory_file_path(Root, Dir3, Dir4).
+  maplist(atom_codes, [Dir2,Dir3], [[H1,H2],T]),
+  append_directories([Dir1,Dir2,Dir3], Dir).
 ldfs_directory_hash(Dir, Hash) :-
   instantiation_error(args([Dir,Hash])).
 
@@ -183,6 +185,18 @@ ldfs_file(Prefix, Local, File) :-
 
 
 
+%! ldfs_file_line(+Prefix:atom, +Local:atom, -Line:string) is nondet.
+
+ldfs_file_line(Prefix, Local, Line) :-
+  ldfs_file(Prefix, Local, File),
+  call_stream_file(File, ldfs_file_line_(Line)).
+ldfs_file_line_(Line, Out) :-
+  repeat,
+  read_line_to_string(Out, Line),
+  (Line == end_of_file -> !, fail ; true).
+
+
+
 %! ldfs_meta(?S, ?P, ?O) is nondet.
 %! ldfs_meta(?S, ?P, ?O, ?Prefix) is nondet.
 
@@ -211,17 +225,12 @@ ldfs_next(Hash1, Hash2) :-
 
 
 
+%! ldfs_root(+Directory:atom) is semidet.
+%! ldfs_root(-Directory:atom) is det.
 
-
-
-% HELPERS %
-
-%! root_(+Root:atom) is semidet.
-%! root_(-Root:atom) is det.
-
-root_(Root) :-
-  setting(ldfs:data_directory, Dir),
-  directory_file_path(Dir, ll, Root).
+ldfs_root(Dir) :-
+  setting(ldfs:data_directory, Dir0),
+  directory_file_path(Dir0, ll, Dir).
 
 
 
