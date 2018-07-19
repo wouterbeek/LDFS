@@ -34,6 +34,7 @@ struct(
 :- rdf_meta
    ld_print_collection(o, ?),
    ld_print_literal(o),
+   ld_print_predicate(r),
    rdf_list_triple(t),
    triples_collections_(+, t, -).
 
@@ -124,7 +125,9 @@ ld_print_subject(BLs, BPOs, S-POs) :-
 % the last predicate: end with a dot
 ld_print_predicates(N, BLs, BPOs, [P-Os]) :- !,
   ld_print_predicate(N, BLs, BPOs, P-Os),
-  format(".~n").
+  % Do not emit an end-of-statement dot in nested blank nodes.
+  (N > 4 -> true ; format(".")),
+  nl.
 % not the last predicate: end with a semi-colon
 ld_print_predicates(N, BLs, BPOs, [P-Os|POs]) :-
   ld_print_predicate(N, BLs, BPOs, P-Os),
@@ -134,12 +137,12 @@ ld_print_predicates(N, BLs, BPOs, [P-Os|POs]) :-
 % one object: all in one line
 ld_print_predicate(N, BLs, BPOs, P-[O]) :- !,
   tab(N),
-  ld_print_iri(P),
+  ld_print_predicate(P),
   format(" "),
   ld_print_subtree(N, BLs, BPOs, O).
 ld_print_predicate(N1, BLs, BPOs, P-Os) :-
   tab(N1),
-  ld_print_iri(P),
+  ld_print_predicate(P),
   nl,
   N2 is N1 + 4,
   ld_print_objects(N2, BLs, BPOs, Os).
@@ -179,6 +182,7 @@ ld_print_subtree(N1, BLs, BPOs, B) :-
   ;   format("[~n"),
       N2 is N1 + 4,
       ld_print_predicates(N2, BLs, BPOs, POs),
+      tab(N1),
       format("]")
   ).
 ld_print_subtree(_, _, _, Term) :-
@@ -217,6 +221,11 @@ ld_print_nonliteral(Iri) :-
   ld_print_iri(Iri).
 ld_print_nonliteral(BNode) :-
   format("~a", [BNode]).
+
+ld_print_predicate(rdf:type) :- !,
+  format("a").
+ld_print_predicate(Iri) :-
+  ld_print_iri(Iri).
 
 ld_print_term(Literal) :-
   rdf_is_literal(Literal), !,
