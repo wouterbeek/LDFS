@@ -4,6 +4,7 @@
     ldfs_upload/1 % +Base:oneof([data,meta])
   ]
 ).
+:- reexport(library(semweb/ldfs)).
 
 /** <module> Linked Data File System (LDFS): Upload
 
@@ -17,7 +18,6 @@
 
 :- use_module(library(file_ext)).
 :- use_module(library(http/http_client2)).
-:- use_module(library(semweb/ldfs)).
 :- use_module(library(tapir/tapir_api)).
 
 :- curl.

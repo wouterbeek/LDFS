@@ -1,7 +1,7 @@
 :- module(
   ldfs,
   [
-    ldfs_compile/0,
+    ldfs_compile/1,        % +Base
     ldfs_data/3,           % ?S, ?P, ?O
     ldfs_data/4,           % ?S, ?P, ?O, ?Prefix
     ldfs_directory/1,      % -Directory
@@ -58,13 +58,14 @@
 
 
 
-%! ldfs_compile is det.
+%! ldfs_compile(+Base:oneof([data,meta])) is det.
 
-ldfs_compile :-
+ldfs_compile(Base) :-
+  must_be(oneof([data,meta]), Base),
+  file_name_extension(Base, 'nq.gz', Local),
   aggregate_all(
     set(File1),
     (
-      member(Local, ['data.nq.gz','meta.nq.gz']),
       ldfs_file(Local, File1),
       \+ is_empty_file(File1),
       hdt_file_name(File1, File2),
