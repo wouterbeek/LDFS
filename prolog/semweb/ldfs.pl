@@ -58,10 +58,10 @@
 
 
 
-%! ldfs_compile(+Base:oneof([data,meta])) is det.
+%! ldfs_compile(+Base:oneof([data,error,meta,warning])) is det.
 
 ldfs_compile(Base) :-
-  must_be(oneof([data,meta]), Base),
+  must_be(oneof([data,error,meta,warning]), Base),
   file_name_extension(Base, 'nq.gz', Local),
   aggregate_all(
     set(File1),
