@@ -196,11 +196,14 @@ ldfs_file(Prefix, Local, File) :-
 
 ldfs_file_line(Prefix, Local, Line) :-
   ldfs_file(Prefix, Local, File),
-  call_stream_file(File, ldfs_file_line_(Line)).
-ldfs_file_line_(Line, Out) :-
-  repeat,
-  read_line_to_string(Out, Line),
-  (Line == end_of_file -> !, fail ; true).
+  read_from_file(
+    File,
+    [In]>>(
+      repeat,
+      read_line_to_string(In, Line),
+      (Line == end_of_file -> !, fail ; true)
+    )
+  ).
 
 
 
