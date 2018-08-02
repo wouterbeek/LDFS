@@ -1,6 +1,7 @@
 :- module(
   ldfs,
   [
+    ldfs_compile/0,
     ldfs_compile/1,        % +Base
     ldfs_data/3,           % ?S, ?P, ?O
     ldfs_data/4,           % ?S, ?P, ?O, ?Prefix
@@ -58,7 +59,12 @@
 
 
 
+%! ldfs_compile is det.
 %! ldfs_compile(+Base:oneof([data,error,meta,warning])) is det.
+
+ldfs_compile :-
+  threaded_maplist(ldfs_compile, [data,error,meta,warning]).
+
 
 ldfs_compile(Base) :-
   must_be(oneof([data,error,meta,warning]), Base),
