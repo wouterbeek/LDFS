@@ -1,10 +1,10 @@
 :- module(
   ldfs,
   [statements/0,
+    ldfs/4,                % +Base, ?S, ?P, ?O
+    ldfs/5,                % +Base, ?S, ?P, ?O, ?Prefix
     ldfs_compile/0,
     ldfs_compile/1,        % +Base
-    ldfs_data/3,           % ?S, ?P, ?O
-    ldfs_data/4,           % ?S, ?P, ?O, ?Prefix
     ldfs_directory/1,      % -Directory
     ldfs_directory/2,      % +Prefix, -Directory
     ldfs_directory_hash/2, % ?Directory, ?Hash
@@ -12,8 +12,6 @@
     ldfs_file/2,           % ?Local, -File
     ldfs_file/3,           % +Prefix, ?Local, -File
     ldfs_file_line/3,      % +Prefix, +Local, -Line
-    ldfs_meta/3,           % ?S, ?P, ?O
-    ldfs_meta/4,           % ?S, ?P, ?O, ?Prefix
     ldfs_next/2,           % +Hash1, -Hash2
     ldfs_root/1            % ?Directory
   ]
@@ -48,10 +46,8 @@
    ]).
 
 :- rdf_meta
-   ldfs_data(r, r, o),
-   ldfs_data(r, r, o, +),
-   ldfs_meta(r, r, o),
-   ldfs_meta(r, r, o, +).
+   ldfs(+, r, r, o),
+   ldfs(+, r, r, o, +).
 
 :- setting(ldfs:data_directory, any, _, "").
 
@@ -60,7 +56,7 @@ statements :-
     sum(N),
     (
       (rdf_equal(P, ll:quadruples) ; rdf_equal(P, ll:triples)),
-      ldfs_meta(_, P, Lit),
+      ldfs(meta, _, P, Lit),
       rdf_literal_value(Lit, N)
     ),
     N
@@ -68,6 +64,20 @@ statements :-
   format("~D\n", [N]).
 
 
+
+
+
+%! ldfs(+Base:oneof([data,error,meta,warning]), ?S, ?P, ?O) is nondet.
+%! ldfs(+Base:oneof([data,error,meta,warning]), ?S, ?P, ?O, ?Prefix) is nondet.
+
+ldfs(Base, S, P, O) :-
+  ldfs(Base, S, P, O, '').
+
+
+ldfs(Base, S, P, O, Prefix) :-
+  file_name_extension(Base, hdt, Local),
+  ldfs_file(Prefix, Local, File),
+  hdt_call(File, {S,P,O}/[Hdt]>>hdt_triple(Hdt, S, P, O)).
 
 
 
@@ -92,19 +102,6 @@ ldfs_compile(Base) :-
     Files
   ),
   threaded_maplist(hdt_create, Files).
-
-
-
-%! ldfs_data(?S, ?P, ?O) is nondet.
-%! ldfs_data(?S, ?P, ?O, ?Prefix) is nondet.
-
-ldfs_data(S, P, O) :-
-  ldfs_data(S, P, O, '').
-
-
-ldfs_data(S, P, O, Prefix) :-
-  ldfs_file(Prefix, 'data.hdt', File),
-  hdt_call(File, {S,P,O}/[Hdt]>>hdt_triple(Hdt, S, P, O)).
 
 
 
@@ -219,28 +216,15 @@ ldfs_file_line(Prefix, Local, Line) :-
 
 
 
-%! ldfs_meta(?S, ?P, ?O) is nondet.
-%! ldfs_meta(?S, ?P, ?O, ?Prefix) is nondet.
-
-ldfs_meta(S, P, O) :-
-  ldfs_meta(S, P, O, '').
-
-
-ldfs_meta(S, P, O, Prefix) :-
-  ldfs_file(Prefix, 'meta.hdt', File),
-  hdt_call(File, {S,P,O}/[Hdt]>>hdt_triple(Hdt, S, P, O)).
-
-
-
 %! ldfs_next(+Hash1:atom, -Hash2:atom) is nondet.
 
 ldfs_next(Hash1, Hash2) :-
   ground(Hash1), !,
-  ldfs_meta(_, ll:entry, Entry, Hash1),
+  ldfs(meta, _, ll:entry, Entry, Hash1),
   rdf_prefix_iri(graph:Hash2, Entry).
 ldfs_next(Hash1, Hash2) :-
   ground(Hash2), !,
-  ldfs_meta(Archive, ll:entry, _, Hash2),
+  ldfs(meta, Archive, ll:entry, _, Hash2),
   rdf_prefix_iri(graph:Hash1, Archive).
 ldfs_next(Hash1, Hash2) :-
   instantiation_error(args([Hash1,Hash2])).
