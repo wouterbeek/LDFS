@@ -1,6 +1,6 @@
 :- module(
   ldfs,
-  [
+  [statements/0,
     ldfs_compile/0,
     ldfs_compile/1,        % +Base
     ldfs_data/3,           % ?S, ?P, ?O
@@ -54,6 +54,18 @@
    ldfs_meta(r, r, o, +).
 
 :- setting(ldfs:data_directory, any, _, "").
+
+statements :-
+  aggregate_all(
+    sum(N),
+    (
+      (rdf_equal(P, ll:quadruples) ; rdf_equal(P, ll:triples)),
+      ldfs_meta(_, P, Lit),
+      rdf_literal_value(Lit, N)
+    ),
+    N
+  ),
+  format("~D\n", [N]).
 
 
 
