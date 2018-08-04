@@ -42,7 +42,7 @@
      file-'https://index.lodlaundromat.org/file/',
      id-'https://lodlaundromat.org/id/',
      ldm-'https://ldm.cc/',
-     ll-'https://lodlaundromat.org/def/',
+     ll,
      rdf
    ]).
 

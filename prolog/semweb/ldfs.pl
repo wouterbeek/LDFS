@@ -41,9 +41,7 @@
 :- initialization
    init_ldfs.
 
-:- maplist(rdf_register_prefix, [
-     ll-'https://lodlaundromat.org/def/'
-   ]).
+:- rdf_register_prefix(ll).
 
 :- rdf_meta
    ldfs(+, r, r, o),
