@@ -91,17 +91,15 @@ ldfs_compile :-
 ldfs_compile(Base) :-
   must_be(oneof([data,error,meta,warning]), Base),
   file_name_extension(Base, 'nq.gz', Local),
-  aggregate_all(
-    set(File1),
+  forall(
     (
       ldfs_file(Local, File1),
       \+ is_empty_file(File1),
       hdt_file_name(File1, File2),
       \+ exists_file(File2)
     ),
-    Files
-  ),
-  threaded_maplist(hdt_create, Files).
+    hdt_create(File1)
+  ).
 
 
 
