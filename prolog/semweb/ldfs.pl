@@ -3,6 +3,7 @@
   [statements/0,
     ldfs/4,                % +Base, ?S, ?P, ?O
     ldfs/5,                % +Base, ?S, ?P, ?O, ?Prefix
+    ldfs_compact/1,        % +Base
     ldfs_compile/0,
     ldfs_compile/1,        % +Base
     ldfs_directory/1,      % -Directory
@@ -79,6 +80,20 @@ ldfs(Base, S, P, O, Prefix) :-
 
 
 
+%! ldfs_compact(+Base:oneof([data,error,meta,warning])) is det.
+
+ldfs_compact(Base) :-
+  must_be(oneof([data,error,meta,warning]), Base),
+  file_name_extension(Base, 'nq.gz', Local),
+  write_to_file(Local, ldfs_compact_(Local)).
+ldfs_compact_(Local, Out) :-
+  forall(
+    hdt_candidate_(Local, File),
+    read_from_file(File, {Out}/[In]>>copy_stream_data(In, Out))
+  ).
+
+
+
 %! ldfs_compile is det.
 %! ldfs_compile(+Base:oneof([data,error,meta,warning])) is det.
 
@@ -90,14 +105,15 @@ ldfs_compile(Base) :-
   must_be(oneof([data,error,meta,warning]), Base),
   file_name_extension(Base, 'nq.gz', Local),
   forall(
-    (
-      ldfs_file(Local, File1),
-      \+ is_empty_file(File1),
-      hdt_file_name(File1, File2),
-      \+ exists_file(File2)
-    ),
-    hdt_create(File1)
+    hdt_candidate_(Local, File),
+    hdt_create(File)
   ).
+
+hdt_candidate_(Local, File1) :-
+  ldfs_file(Local, File1),
+  \+ is_empty_file(File1),
+  hdt_file_name(File1, File2),
+  \+ exists_file(File2).
 
 
 
