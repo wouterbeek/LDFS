@@ -148,7 +148,7 @@ distribution_file(Distribution, DataFile) :-
   rdf_prefix_iri(id:ArchHash, Arch),
   archive_entry(Arch, Entry),
   rdf_prefix_iri(id:EntryHash, Entry),
-  ldfs_file(EntryHash, 'data.nq.gz', DataFile),
+  ldfs_file(EntryHash, true, 'data.nq.gz', DataFile),
   \+ is_empty_file(DataFile).
 
 archive_entry(Arch, Entry) :-

@@ -32,6 +32,7 @@ module does not give query results _across_ files.
 :- use_module(library(lists)).
 :- use_module(library(ordsets)).
 :- use_module(library(solution_sequences)).
+:- use_module(library(yall)).
 
 :- use_module(library(dict)).
 :- use_module(library(file_ext)).
@@ -82,12 +83,16 @@ ld_dir(Prefix) :-
 
 ld_dir(Prefix, Options) :-
   must_be(atom, Prefix),
-  pagination(ldfs_directory(Prefix), pp_hash_directory(Prefix), Options).
+  pagination(
+    {Prefix}/[Dir]>>ldfs_directory(Prefix, true, Dir, _),
+    pp_hash_directory(Prefix),
+    Options
+  ).
 
 
 
 %! ld_file(+Prefix:atom, +Local:atom) is nondet.
-%! ld_file(+Prefix:atom, +Local:atom, +Options:dict) is det.
+%! ld_file(+Prefix:atom, +Local:atom, +Options:dict) is nondet.
 
 ld_file(Prefix, Local) :-
   ld_file(Prefix, Local, _{}).
@@ -95,7 +100,14 @@ ld_file(Prefix, Local) :-
 
 ld_file(Prefix, Local, Options) :-
   maplist(must_be(atom), [Prefix,Local]),
-  pagination(ldfs_file_line(Prefix, Local), pp_file_line, Options).
+  pagination(
+    {Prefix,Local}/[Line]>>(
+      ldfs_file(Prefix, true, Local, File),
+      file_line(File, Line)
+    ),
+    [Line]>>format("~s~n", [Line]),
+    Options
+  ).
 
 
 
@@ -136,7 +148,7 @@ ld_root_(Root, Hdt) :-
 hdt_call(Prefix, Base, Goal_1) :-
   must_be(oneof([data,meta]), Base),
   file_name_extension(Base, hdt, Local),
-  ldfs_file(Prefix, Local, File),
+  ldfs_file(Prefix, true, Local, File),
   setup_call_cleanup(
     hdt_open(File, Hdt),
     call(Goal_1, Hdt),
@@ -211,22 +223,14 @@ pp_directory(Dir) :-
 
 
 
-%! pp_file_line(+Line:string) is det.
-
-pp_file_line(Line) :-
-  format("~s~n", [Line]).
-
-
-
 %! pp_hash_directory(+Prefix:atom, +Directory:atom) is det.
 
 pp_hash_directory(Prefix, Dir) :-
-  ldfs_is_finished(Dir),
   format(current_output, "  ", []),
-  ldfs_directory_hash(Dir, Hash),
-  atom_concat(Prefix, Rest, Hash),
+  ldfs_directory(Prefix, true, Dir, Hash),
+  atom_concat(Prefix, Postfix, Hash),
   ansi_format([fg(green)], "~a|", [Prefix]),
-  ansi_format([fg(red)], "~a", [Rest]),
+  ansi_format([fg(red)], "~a", [Postfix]),
   ansi_format([fg(green)], ":  ", []),
   pp_directory(Dir),
   nl.
