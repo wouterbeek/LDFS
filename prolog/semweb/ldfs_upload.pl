@@ -148,7 +148,7 @@ distribution_file(Distribution, DataFile) :-
   rdf_prefix_iri(id:ArchHash, Arch),
   archive_entry(Arch, Entry),
   rdf_prefix_iri(id:EntryHash, Entry),
-  ldfs_file(EntryHash, true, 'data.nq.gz', DataFile),
+  ldfs_file(EntryHash, true, _, _, 'data.nq.gz', DataFile),
   \+ is_empty_file(DataFile).
 
 archive_entry(Arch, Entry) :-
@@ -195,7 +195,7 @@ ldfs_upload_file(Kind, File) :-
   setup_call_cleanup(
     gzopen(File, write, Out),
     forall(
-      ldfs_file(Local, File0),
+      ldfs_file('', true, _, _, Local, File0),
       (
         debug(ldfs, "~a → ~a", [File0,File]),
         setup_call_cleanup(

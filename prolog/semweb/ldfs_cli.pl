@@ -102,7 +102,7 @@ ld_file(Prefix, Local, Options) :-
   maplist(must_be(atom), [Prefix,Local]),
   pagination(
     {Prefix,Local}/[Line]>>(
-      ldfs_file(Prefix, true, Local, File),
+      ldfs_file(Prefix, true, _, _, Local, File),
       file_line(File, Line)
     ),
     [Line]>>format("~s~n", [Line]),
@@ -148,7 +148,7 @@ ld_root_(Root, Hdt) :-
 hdt_call(Prefix, Base, Goal_1) :-
   must_be(oneof([data,meta]), Base),
   file_name_extension(Base, hdt, Local),
-  ldfs_file(Prefix, true, Local, File),
+  ldfs_file(Prefix, true, _, _, Local, File),
   setup_call_cleanup(
     hdt_open(File, Hdt),
     call(Goal_1, Hdt),

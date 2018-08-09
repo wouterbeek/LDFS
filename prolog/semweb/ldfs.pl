@@ -1,16 +1,16 @@
 :- module(
   ldfs,
   [
-    ldfs/4,                  % +Base, ?S, ?P, ?O
-    ldfs/5,                  % +Base, ?S, ?P, ?O, ?Prefix
-    ldfs_compact/1,          % +Base
+    ldfs/4,           % +Base, ?S, ?P, ?O
+    ldfs/5,           % +Base, ?S, ?P, ?O, ?Prefix
+    ldfs_compact/1,   % +Base
     ldfs_compile/0,
-    ldfs_compile/1,          % +Base
-    ldfs_directory/4,        % +Prefix, +Finished, ?Directory, -Hash
-    ldfs_file/4,             % +Prefix, +Finished, ?Local, ?File
-    ldfs_next/2,             % +Hash1, -Hash2
-    ldfs_root/1,             % ?Directory
-    ldfs_upload/1            % +Base
+    ldfs_compile/1,   % +Base
+    ldfs_directory/4, % +Prefix, +Finished, ?Directory, -Hash
+    ldfs_file/6,      % +Prefix, +Finished, ?Directory, -Hash, ?Local, ?File
+    ldfs_next/2,      % +Hash1, -Hash2
+    ldfs_root/1,      % ?Directory
+    ldfs_upload/1     % +Base
   ]
 ).
 
@@ -59,7 +59,7 @@ ldfs(Base, S, P, O) :-
 
 ldfs(Base, S, P, O, Prefix) :-
   file_name_extension(Base, hdt, Local),
-  ldfs_file(Prefix, true, Local, File),
+  ldfs_file(Prefix, true, _, _, Local, File),
   hdt_call(File, {S,P,O}/[Hdt]>>hdt_triple(Hdt, S, P, O)).
 
 
@@ -80,7 +80,7 @@ ldfs_compact(Base) :-
   ).
 
 ldfs_nquads_candidate_(Local, File) :-
-  ldfs_file('', true, Local, File),
+  ldfs_file('', true, _, _, Local, File),
   \+ is_empty_file(File).
 
 
@@ -152,18 +152,22 @@ finished_(Fin, Dir) :-
 
 
 
-%! ldfs_file(+Prefix:atom, +Finished:boolean, +Local:atom, +File:atom) is semidet.
-%! ldfs_file(+Prefix:atom, +Finished:boolean, +Local:atom, -File:atom) is nondet.
-%! ldfs_file(+Prefix:atom, +Finished:boolean, -Local:atom, +File:atom) is semidet.
-%! ldfs_file(+Prefix:atom, +Finished:boolean, -Local:atom, -File:atom) is nondet.
+%! ldfs_file(+Prefix:atom, +Finished:boolean, +Directory:atom, -Hash:atom, +Local:atom, +File:atom) is semidet.
+%! ldfs_file(+Prefix:atom, +Finished:boolean, +Directory:atom, -Hash:atom, +Local:atom, -File:atom) is semidet.
+%! ldfs_file(+Prefix:atom, +Finished:boolean, +Directory:atom, -Hash:atom, -Local:atom, +File:atom) is semidet.
+%! ldfs_file(+Prefix:atom, +Finished:boolean, +Directory:atom, -Hash:atom, -Local:atom, -File:atom) is nondet.
+%! ldfs_file(+Prefix:atom, +Finished:boolean, -Directory:atom, -Hash:atom, +Local:atom, +File:atom) is nondet.
+%! ldfs_file(+Prefix:atom, +Finished:boolean, -Directory:atom, -Hash:atom, +Local:atom, -File:atom) is nondet.
+%! ldfs_file(+Prefix:atom, +Finished:boolean, -Directory:atom, -Hash:atom, -Local:atom, +File:atom) is nondet.
+%! ldfs_file(+Prefix:atom, +Finished:boolean, -Directory:atom, -Hash:atom, -Local:atom, -File:atom) is nondet.
 
-ldfs_file(Prefix, Fin, Local, File) :-
+ldfs_file(Prefix, Fin, Dir, Hash, Local, File) :-
   ground(File), !,
   exists_file(File),
-  ldfs_directory(Prefix, Fin, Dir, _),
+  ldfs_directory(Prefix, Fin, Dir, Hash),
   directory_file_path(Dir, Local, File).
-ldfs_file(Prefix, Fin, Local, File) :-
-  ldfs_directory(Prefix, Fin, Dir, _),
+ldfs_file(Prefix, Fin, Dir, Hash, Local, File) :-
+  ldfs_directory(Prefix, Fin, Dir, Hash),
   directory_file_path2(Dir, Local, File),
   exists_file(File).
 
