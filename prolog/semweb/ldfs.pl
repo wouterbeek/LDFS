@@ -1,6 +1,6 @@
 :- module(
   ldfs,
-  [status/0,statements/0,
+  [
     ldfs/4,                  % +Base, ?S, ?P, ?O
     ldfs/5,                  % +Base, ?S, ?P, ?O, ?Prefix
     ldfs_compact/1,          % +Base
@@ -20,7 +20,6 @@
 @version 2018
 */
 
-:- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(error)).
 :- use_module(library(lists)).
@@ -46,34 +45,6 @@
    ldfs(+, r, r, o, +).
 
 :- setting(ldfs:data_directory, any, _, "").
-
-
-
-status :-
-  maplist(status_, [downloaded,decompressed,recoded,parsed]).
-
-status_(Local) :-
-  aggregate_all(count, unfinished_file(Local, _), N),
-  format("~a: ~D\n", [Local,N]).
-
-unfinished_file(Local, File) :-
-  ldfs_directory('', false, Dir, _),
-  directory_file_path(Dir, Local, File),
-  exists_file(File).
-
-
-
-statements :-
-  aggregate_all(
-    sum(N),
-    (
-      (rdf_equal(P, ll:quadruples) ; rdf_equal(P, ll:triples)),
-      ldfs(meta, _, P, Lit),
-      rdf_literal_value(Lit, N)
-    ),
-    N
-  ),
-  format("~D\n", [N]).
 
 
 
