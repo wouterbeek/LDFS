@@ -3,9 +3,11 @@
   [
     statements/0,
     status/0,
-    status/1      % +Type
+    status/1,     % +Alias
+    status_loop/1 % +Interval
   ]
 ).
+:- reexport(library(semweb/ldfs)).
 
 /** <module> LDFS status overview
 
@@ -17,9 +19,14 @@
 :- use_module(library(apply)).
 
 :- use_module(library(call_ext)).
-:- use_module(library(semweb/ldfs)).
+:- use_module(library(rocks_ext)).
 :- use_module(library(semweb/rdf_prefix)).
 :- use_module(library(semweb/rdf_term)).
+
+:- at_halt(call_forall(alias_, rocks_close)).
+
+:- initialization
+   init_ldfs_status.
 
 
 
@@ -42,25 +49,45 @@ statements :-
 
 
 %! status is det.
-%! status(+Type:oneof(downloaded,decompressed,recoded,parsed]) is det.
+%! status(+Alias:oneof([downloaded,decompressed,recoded,seeds,stale]) is det.
 
 status :-
-  forall(
-    type_(Type),
-    status(Type)
-  ).
+  call_forall(alias_, status).
 
-status(Local) :-
-  call_must_be(type_, Local),
-  aggregate_all(count, unfinished_file(Local, _), N),
-  format("~a: ~D\n", [Local,N]).
+status(Alias) :-
+  call_must_be(alias_, Alias),
+  rocks_size(Alias, N),
+  format("~a: ~D\n", [Alias,N]).
 
-unfinished_file(Local, File) :-
+unfinished_file(Alias, File) :-
   ldfs_directory('', false, Dir, _),
-  directory_file_path(Dir, Local, File),
+  directory_file_path(Dir, Alias, File),
   exists_file(File).
 
-type_(downloaded).
-type_(decompressed).
-type_(recoded).
-type_(parsed).
+alias_(seeds).
+alias_(stale).
+alias_(downloaded).
+alias_(decompressed).
+alias_(recoded).
+
+
+
+%! status_loop(+Interval:positive_integer) is det.
+
+status_loop(N) :-
+  status,
+  nl,
+  sleep(N),
+  status_loop(N).
+
+
+
+
+
+% INITIALIZATION
+
+init_ldfs_status :-
+  call_forall(
+    alias_,
+    [Alias]>>rocks_init(Alias, [key(atom),mode(read_only),value(term)])
+  ).
