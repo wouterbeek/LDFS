@@ -65,19 +65,27 @@ ldfs(Base, S, P, O, Prefix) :-
 
 
 %! ldfs_compact(+Base:oneof([data,error,meta,warning])) is det.
+%! ldfs_compact(+Base:oneof([data,error,meta,warning]), -File:atom) is det.
 
 ldfs_compact(Base) :-
+  ldfs_compact(Base, _).
+
+
+ldfs_compact(Base, ToFile) :-
   must_be(oneof([data,error,meta,warning]), Base),
+  setting(data_directory, Dir),
   file_name_extension(Base, 'nq.gz', Local),
+  directory_file_path(Dir, Local, ToFile),
   write_to_file(
-    Local,
+    ToFile,
     {Local}/[Out]>>(
       forall(
-        ldfs_nquads_candidate_(Local, File),
-        read_from_file(File, {Out}/[In]>>copy_stream_data(In, Out))
+        ldfs_nquads_candidate_(Local, FromFile),
+        read_from_file(FromFile, {Out}/[In]>>copy_stream_data(In, Out))
       )
     )
-  ).
+  ),
+  format(user_output, "🐱\n", []).
 
 ldfs_nquads_candidate_(Local, File) :-
   ldfs_file('', true, _, _, Local, File),
@@ -199,10 +207,9 @@ ldfs_root(Root) :-
 %! ldfs_upload(+Base:oneof([data,meta])) is det.
 
 ldfs_upload(meta) :-
-  ldfs_compact(error),
-  ldfs_compact(meta),
-  Properties = _{accessLevel: public, files: ['error.nq.gz','meta.nq.gz']},
-  dataset_upload(_, _, meta, Properties).
+  maplist(ldfs_compact, [error,meta], Files),
+  dataset_upload(_, _, meta, _{accessLevel: public, files: Files}),
+  maplist(delete_file, Files).
 
 
 

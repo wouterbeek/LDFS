@@ -72,6 +72,14 @@ module does not give query results _across_ files.
 %! ld_dir is det.
 %! ld_dir(+Prefix:atom) is det.
 %! ld_dir(+Prefix:atom, +Options:dict) is det.
+%
+% The following options are supported:
+%
+%   * finished(+boolean)
+%
+%     Default is `true'.
+%
+%   * Other options are passed to pagination/3.
 
 ld_dir :-
   ld_dir('').
@@ -83,9 +91,10 @@ ld_dir(Prefix) :-
 
 ld_dir(Prefix, Options) :-
   must_be(atom, Prefix),
+  dict_get(finished, Options, true, Finished),
   pagination(
-    {Prefix}/[Dir]>>ldfs_directory(Prefix, true, Dir, _),
-    pp_hash_directory(Prefix),
+    {Prefix,Finished}/[Dir]>>ldfs_directory(Prefix, Finished, Dir, _),
+    pp_hash_directory(Prefix, Finished),
     Options
   ).
 
@@ -223,11 +232,11 @@ pp_directory(Dir) :-
 
 
 
-%! pp_hash_directory(+Prefix:atom, +Directory:atom) is det.
+%! pp_hash_directory(+Prefix:atom, +Finished:boolean, +Directory:atom) is det.
 
-pp_hash_directory(Prefix, Dir) :-
+pp_hash_directory(Prefix, Fin, Dir) :-
   format(current_output, "  ", []),
-  ldfs_directory(Prefix, true, Dir, Hash),
+  ldfs_directory(Prefix, Fin, Dir, Hash),
   atom_concat(Prefix, Postfix, Hash),
   ansi_format([fg(green)], "~a|", [Prefix]),
   ansi_format([fg(red)], "~a", [Postfix]),
