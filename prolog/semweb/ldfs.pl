@@ -3,14 +3,10 @@
   [
     ldfs/4,           % +Base, ?S, ?P, ?O
     ldfs/5,           % +Base, ?S, ?P, ?O, ?Prefix
-    ldfs_compact/1,   % +Base
-    ldfs_compile/0,
-    ldfs_compile/1,   % +Base
-    ldfs_directory/4, % +Prefix, +Finished, ?Directory, -Hash
-    ldfs_file/6,      % +Prefix, +Finished, ?Directory, -Hash, ?Local, ?File
-    ldfs_next/2,      % +Hash1, -Hash2
-    ldfs_root/1,      % ?Directory
-    ldfs_upload/1     % +Base
+    ldfs_directory/3, % +Prefix, ?Finished, ?Directory
+    ldfs_directory/4, % +Prefix, ?Finished, ?Directory, -Hash
+    ldfs_file/6,      % +Prefix, ?Finished, ?Directory, -Hash, ?Local, ?File
+    ldfs_root/1       % ?Directory
   ]
 ).
 
@@ -64,59 +60,14 @@ ldfs(Base, S, P, O, Prefix) :-
 
 
 
-%! ldfs_compact(+Base:oneof([data,error,meta,warning])) is det.
-%! ldfs_compact(+Base:oneof([data,error,meta,warning]), -File:atom) is det.
+%! ldfs_directory(+Prefix:atom, ?Finished:boolean, +Directory:atom) is semidet.
+%! ldfs_directory(+Prefix:atom, ?Finished:boolean, -Directory:atom) is nondet.
+%! ldfs_directory(+Prefix:atom, ?Finished:boolean, +Directory:atom, -Hash:atom) is semidet.
+%! ldfs_directory(+Prefix:atom, ?Finished:boolean, -Directory:atom, -Hash:atom) is nondet.
 
-ldfs_compact(Base) :-
-  ldfs_compact(Base, _).
+ldfs_directory(Prefix, Fin, Dir) :-
+  ldfs_directory(Prefix, Fin, Dir, _).
 
-
-ldfs_compact(Base, ToFile) :-
-  must_be(oneof([data,error,meta,warning]), Base),
-  setting(data_directory, Dir),
-  file_name_extension(Base, 'nq.gz', Local),
-  directory_file_path(Dir, Local, ToFile),
-  write_to_file(
-    ToFile,
-    {Local}/[Out]>>(
-      forall(
-        ldfs_nquads_candidate_(Local, FromFile),
-        read_from_file(FromFile, {Out}/[In]>>copy_stream_data(In, Out))
-      )
-    )
-  ),
-  format(user_output, "🐱\n", []).
-
-ldfs_nquads_candidate_(Local, File) :-
-  ldfs_file('', true, _, _, Local, File),
-  \+ is_empty_file(File).
-
-
-
-%! ldfs_compile is det.
-%! ldfs_compile(+Base:oneof([data,error,meta,warning])) is det.
-
-ldfs_compile :-
-  threaded_maplist(ldfs_compile, [data,error,meta,warning]).
-
-
-ldfs_compile(Base) :-
-  must_be(oneof([data,error,meta,warning]), Base),
-  file_name_extension(Base, 'nq.gz', Local),
-  forall(
-    ldfs_hdt_candidate_(Local, File),
-    hdt_create(File)
-  ).
-
-ldfs_hdt_candidate_(Local, File1) :-
-  ldfs_nquads_candidate_(Local, File1),
-  hdt_file_name(File1, File2),
-  \+ exists_file(File2).
-
-
-
-%! ldfs_directory(+Prefix:atom, +Finished:boolean, +Directory:atom, -Hash:atom) is semidet.
-%! ldfs_directory(+Prefix:atom, +Finished:boolean, -Directory:atom, -Hash:atom) is nondet.
 
 ldfs_directory('', Fin, Dir2, Hash) :- !,
   (   ground(Dir2)
@@ -160,14 +111,14 @@ finished_(Fin, Dir) :-
 
 
 
-%! ldfs_file(+Prefix:atom, +Finished:boolean, +Directory:atom, -Hash:atom, +Local:atom, +File:atom) is semidet.
-%! ldfs_file(+Prefix:atom, +Finished:boolean, +Directory:atom, -Hash:atom, +Local:atom, -File:atom) is semidet.
-%! ldfs_file(+Prefix:atom, +Finished:boolean, +Directory:atom, -Hash:atom, -Local:atom, +File:atom) is semidet.
-%! ldfs_file(+Prefix:atom, +Finished:boolean, +Directory:atom, -Hash:atom, -Local:atom, -File:atom) is nondet.
-%! ldfs_file(+Prefix:atom, +Finished:boolean, -Directory:atom, -Hash:atom, +Local:atom, +File:atom) is nondet.
-%! ldfs_file(+Prefix:atom, +Finished:boolean, -Directory:atom, -Hash:atom, +Local:atom, -File:atom) is nondet.
-%! ldfs_file(+Prefix:atom, +Finished:boolean, -Directory:atom, -Hash:atom, -Local:atom, +File:atom) is nondet.
-%! ldfs_file(+Prefix:atom, +Finished:boolean, -Directory:atom, -Hash:atom, -Local:atom, -File:atom) is nondet.
+%! ldfs_file(+Prefix:atom, ?Finished:boolean, +Directory:atom, -Hash:atom, +Local:atom, +File:atom) is semidet.
+%! ldfs_file(+Prefix:atom, ?Finished:boolean, +Directory:atom, -Hash:atom, +Local:atom, -File:atom) is semidet.
+%! ldfs_file(+Prefix:atom, ?Finished:boolean, +Directory:atom, -Hash:atom, -Local:atom, +File:atom) is semidet.
+%! ldfs_file(+Prefix:atom, ?Finished:boolean, +Directory:atom, -Hash:atom, -Local:atom, -File:atom) is nondet.
+%! ldfs_file(+Prefix:atom, ?Finished:boolean, -Directory:atom, -Hash:atom, +Local:atom, +File:atom) is nondet.
+%! ldfs_file(+Prefix:atom, ?Finished:boolean, -Directory:atom, -Hash:atom, +Local:atom, -File:atom) is nondet.
+%! ldfs_file(+Prefix:atom, ?Finished:boolean, -Directory:atom, -Hash:atom, -Local:atom, +File:atom) is nondet.
+%! ldfs_file(+Prefix:atom, ?Finished:boolean, -Directory:atom, -Hash:atom, -Local:atom, -File:atom) is nondet.
 
 ldfs_file(Prefix, Fin, Dir, Hash, Local, File) :-
   ground(File), !,
@@ -181,35 +132,11 @@ ldfs_file(Prefix, Fin, Dir, Hash, Local, File) :-
 
 
 
-%! ldfs_next(+Hash1:atom, -Hash2:atom) is nondet.
-
-ldfs_next(Hash1, Hash2) :-
-  ground(Hash1), !,
-  ldfs(meta, _, ll:entry, Entry, Hash1),
-  rdf_prefix_iri(graph:Hash2, Entry).
-ldfs_next(Hash1, Hash2) :-
-  ground(Hash2), !,
-  ldfs(meta, Archive, ll:entry, _, Hash2),
-  rdf_prefix_iri(graph:Hash1, Archive).
-ldfs_next(Hash1, Hash2) :-
-  instantiation_error(args([Hash1,Hash2])).
-
-
-
 %! ldfs_root(+Directory:atom) is semidet.
 %! ldfs_root(-Directory:atom) is det.
 
 ldfs_root(Root) :-
   setting(ldfs:data_directory, Root).
-
-
-
-%! ldfs_upload(+Base:oneof([data,meta])) is det.
-
-ldfs_upload(meta) :-
-  maplist(ldfs_compact, [error,meta], Files),
-  dataset_upload(_, _, meta, _{accessLevel: public, files: Files}),
-  maplist(delete_file, Files).
 
 
 

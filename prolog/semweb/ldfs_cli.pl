@@ -93,7 +93,7 @@ ld_dir(Prefix, Options) :-
   must_be(atom, Prefix),
   dict_get(finished, Options, true, Finished),
   pagination(
-    {Prefix,Finished}/[Dir]>>ldfs_directory(Prefix, Finished, Dir, _),
+    {Prefix,Finished}/[Dir]>>ldfs_directory(Prefix, Finished, Dir),
     pp_hash_directory(Prefix, Finished),
     Options
   ).
