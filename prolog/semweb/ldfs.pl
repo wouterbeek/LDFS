@@ -81,7 +81,8 @@ ldfs_directory('', Fin, Dir2, Hash) :- !,
       directory_subdirectory(Dir1, Hash2, Dir2),
       finished_(Fin, Dir2),
       atom_concat(Hash1, Hash2, Hash)
-  ).
+  ),
+  atom_length(Hash, 32).
 ldfs_directory(Prefix, Fin, Dir2, Hash) :-
   atom_length(Prefix, PrefixLength),
   ldfs_root(Root),
@@ -103,7 +104,8 @@ ldfs_directory(Prefix, Fin, Dir2, Hash) :-
       append_directories([Root,Dir1,Wildcard0], Wildcard),
       expand_file_name(Wildcard, Dir2s),
       member(Dir2, Dir2s)
-  ).
+  ),
+  atom_length(Hash, 32).
 
 finished_(Fin, Dir) :-
   directory_file_path(Dir, finished, File),
