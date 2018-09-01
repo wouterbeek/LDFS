@@ -1,5 +1,5 @@
 :- module(
-  script,
+  maintenance,
   [
     compact/1, % +Base
     compact/2, % +Base, -File
@@ -12,6 +12,8 @@
 ).
 
 :- use_module(library(apply)).
+:- use_module(library(error)).
+:- use_module(library(settings)).
 
 :- use_module(library(call_ext)).
 :- use_module(library(file_ext)).
@@ -45,7 +47,7 @@ compact(Base) :-
 
 compact(Base, ToFile) :-
   must_be(oneof([data,error,meta,warning]), Base),
-  setting(data_directory, Dir),
+  setting(ldfs:data_directory, Dir),
   file_name_extension(Base, 'nq.gz', Local),
   directory_file_path(Dir, Local, ToFile),
   write_to_file(
