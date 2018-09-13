@@ -71,7 +71,8 @@ nquads_candidate_(Local, File) :-
 %! compile(+Base:oneof([data,error,meta,warning])) is det.
 
 compile :-
-  threaded_maplist(compile, [data,error,meta,warning]).
+  current_prolog_flag(cpu_count, N),
+  threaded_maplist(N, compile, [data,error,meta,warning]).
 
 
 compile(Base) :-
