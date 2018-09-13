@@ -107,7 +107,8 @@ status(Alias) :-
 
 upload(meta) :-
   maplist(compact, [error,meta], Files),
-  dataset_upload(_, _, meta, _{accessLevel: public, files: Files}),
+  Properties = _{accessLevel: public, files: Files, imports: [index]},
+  dataset_upload(_, _, meta, Properties),
   maplist(delete_file, Files).
 
 
