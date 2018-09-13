@@ -94,7 +94,6 @@ ldfs_directory(Prefix, Fin, Dir2, Hash) :-
       member(Dir1, Dir1s),
       directory_file(Dir1, Hash1),
       directory_subdirectory(Dir1, Hash2, Dir2),
-      finished_(Fin, Dir2),
       atom_concat(Hash1, Hash2, Hash)
   ;   % Hash goes past the first two characters (inner directory).
       atom_codes(Prefix, [H1,H2|T1]),
@@ -107,6 +106,7 @@ ldfs_directory(Prefix, Fin, Dir2, Hash) :-
       directory_file_path2(_, Hash2, Dir2),
       atom_concat(Hash1, Hash2, Hash)
   ),
+  finished_(Fin, Dir2),
   atom_length(Hash, 32).
 
 finished_(Fin, Dir) :-
