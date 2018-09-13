@@ -11,6 +11,12 @@
   ]
 ).
 
+/** <module> LDFS maintenance
+
+@author Wouter Beek
+@version 2018
+*/
+
 :- use_module(library(apply)).
 :- use_module(library(error)).
 :- use_module(library(settings)).
