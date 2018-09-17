@@ -11,6 +11,12 @@
   ]
 ).
 
+/** <module> LDFS maintenance
+
+@author Wouter Beek
+@version 2018
+*/
+
 :- use_module(library(apply)).
 :- use_module(library(error)).
 :- use_module(library(settings)).
@@ -71,7 +77,8 @@ nquads_candidate_(Local, File) :-
 %! compile(+Base:oneof([data,error,meta,warning])) is det.
 
 compile :-
-  threaded_maplist(compile, [data,error,meta,warning]).
+  current_prolog_flag(cpu_count, N),
+  threaded_maplist(N, compile, [data,error,meta,warning]).
 
 
 compile(Base) :-
@@ -106,7 +113,8 @@ status(Alias) :-
 
 upload(meta) :-
   maplist(compact, [error,meta], Files),
-  dataset_upload(_, _, meta, _{accessLevel: public, files: Files}),
+  Properties = _{accessLevel: public, files: Files, imports: [index]},
+  dataset_upload(_, _, meta, Properties),
   maplist(delete_file, Files).
 
 
