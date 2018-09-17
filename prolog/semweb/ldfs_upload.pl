@@ -30,6 +30,7 @@
 :- use_module(library(semweb/rdf_term)).
 :- use_module(library(string_ext)).
 :- use_module(library(tapir/tapir_api)).
+:- use_module(library(tapir/tapir_generic)).
 :- use_module(library(thread_ext)).
 :- use_module(library(uri_ext)).
 
@@ -215,25 +216,3 @@ ldfs_upload_file(Kind, File) :-
 metadata_statement(S, P, O) :-
   current_user(User),
   statement(_, User, metadata, S, P, O).
-
-
-
-%! triply_name(+Name:atom, -TriplyName:atom) is det.
-%
-% Triply names can only contain alpha-numeric characters and hyphens.
-
-triply_name(Name1, Name3) :-
-  atom_phrase(triply_name_, Name1, Name2),
-  atom_truncate(Name2, 40, Name3).
-
-triply_name_, [Code] -->
-  [Code],
-  {
-    code_type(Code, ascii),
-    code_type(Code, alnum)
-  }, !,
-  triply_name_.
-triply_name_, "-" -->
-  [_], !,
-  triply_name_.
-triply_name_--> "".
