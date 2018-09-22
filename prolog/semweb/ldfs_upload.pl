@@ -174,9 +174,8 @@ ldfs_upload_meta :-
 
 ldfs_upload(Kinds) :-
   must_be(list(oneof([data,error,meta,warning])), Kinds),
-  current_prolog_flag(cpu_count, N),
   setup_call_cleanup(
-    threaded_maplist(N, ldfs_upload_file, Kinds, Files1),
+    threaded_maplist_2(ldfs_upload_file, Kinds, Files1),
     (
       exclude(is_empty_file, Files1, Files2),
       dataset_upload(_, _, metadata, _{accessLevel: public, files: Files2})
