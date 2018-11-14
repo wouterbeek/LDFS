@@ -39,7 +39,7 @@
 
 :- maplist(rdf_register_prefix, [
      data-'https://index.lodlaundromat.org/dataset/',
-     dcterm,
+     dct,
      file-'https://index.lodlaundromat.org/file/',
      id-'https://lodlaundromat.org/id/',
      ldm,
@@ -89,7 +89,7 @@ ldfs_upload_dataset(Dataset) :-
   rdf_literal_lexical_form(DatasetName1, DatasetName2),
   triply_name(DatasetName2, DatasetName3),
   % Not every dataset has a description yet.
-  (   index_statement(Dataset, dcterm:description, Desc0)
+  (   index_statement(Dataset, dct:description, Desc0)
   ->  rdf_literal_lexical_form(Desc0, Desc)
   ;   Desc = ""
   ),
@@ -126,7 +126,7 @@ ldfs_upload_dataset(Dataset) :-
   ).
 
 create_dataset_organization(Dataset, OrgName3) :-
-  index_statement(Dataset, dcterm:creator, Org),
+  index_statement(Dataset, dct:creator, Org),
   index_statement(Org, rdfs:label, OrgName1),
   rdf_literal_lexical_form(OrgName1, OrgName2),
   triply_name(OrgName2, OrgName3),
