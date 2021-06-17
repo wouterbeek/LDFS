@@ -11,8 +11,6 @@
 
 /** <module> Linked Data File System (LDFS): Upload
 
-@author Wouter Beek
-@version 2018
 */
 
 :- use_module(library(apply)).

@@ -13,7 +13,7 @@
 /** <module> Linked Data File System (LDFS)
 
 @author Wouter Beek
-@version 2018
+@version 2018-2019
 */
 
 :- use_module(library(apply)).
@@ -25,7 +25,7 @@
 :- use_module(library(call_ext)).
 :- use_module(library(conf_ext)).
 :- use_module(library(file_ext)).
-:- use_module(library(semweb/hdt_api)).
+:- use_module(library(semweb/hdt_file)).
 :- use_module(library(semweb/rdf_prefix)).
 :- use_module(library(semweb/rdf_term)).
 :- use_module(library(tapir/tapir_api)).
@@ -56,7 +56,7 @@ ldfs(Base, S, P, O) :-
 ldfs(Base, S, P, O, Prefix) :-
   file_name_extension(Base, hdt, Local),
   ldfs_file(Prefix, true, _, _, Local, File),
-  hdt_call(File, {S,P,O}/[Hdt]>>hdt_triple(Hdt, S, P, O)).
+  hdt_call_file(File, {S,P,O}/[Hdt0]>>hdt_triple(Hdt0, S, P, O)).
 
 
 
@@ -111,7 +111,7 @@ ldfs_directory(Prefix, Fin, Dir2, Hash) :-
 
 finished_(Fin, Dir) :-
   directory_file_path(Dir, finished, File),
-  call_bool(exists_file(File), Fin).
+  call_boolean(exists_file(File), Fin).
 
 
 

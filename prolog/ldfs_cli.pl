@@ -55,7 +55,7 @@ module does not give query results _across_ files.
 :- meta_predicate
     hdt_call(+, +, 1),
     pagination(1, 1, +),
-    pp_page(+, 1).
+    print_page(+, 1).
 
 :- rdf_meta
    cli_root(+, r),
@@ -71,7 +71,7 @@ module does not give query results _across_ files.
 
 %! ld_dir is det.
 %! ld_dir(+Prefix:atom) is det.
-%! ld_dir(+Prefix:atom, +Options:dict) is det.
+%! ld_dir(+Prefix:atom, +Options:options) is det.
 %
 % The following options are supported:
 %
@@ -93,15 +93,15 @@ ld_dir(Prefix, Options) :-
   must_be(atom, Prefix),
   dict_get(finished, Options, true, Finished),
   pagination(
-    {Prefix,Finished}/[Dir]>>ldfs_directory(Prefix, Finished, Dir),
-    pp_hash_directory(Prefix, Finished),
+    {Prefix,Finished}/[Dir0]>>ldfs_directory(Prefix, Finished, Dir0),
+    print_hash_directory(Prefix, Finished),
     Options
   ).
 
 
 
 %! ld_file(+Prefix:atom, +Local:atom) is nondet.
-%! ld_file(+Prefix:atom, +Local:atom, +Options:dict) is nondet.
+%! ld_file(+Prefix:atom, +Local:atom, +Options:options) is nondet.
 
 ld_file(Prefix, Local) :-
   ld_file(Prefix, Local, _{}).
@@ -110,11 +110,11 @@ ld_file(Prefix, Local) :-
 ld_file(Prefix, Local, Options) :-
   maplist(must_be(atom), [Prefix,Local]),
   pagination(
-    {Prefix,Local}/[Line]>>(
+    {Prefix,Local}/[Line0]>>(
       ldfs_file(Prefix, true, _, _, Local, File),
-      file_line(File, Line)
+      file_line(File, Line0)
     ),
-    [Line]>>format("~s~n", [Line]),
+    [Line0]>>format("~s~n", [Line0]),
     Options
   ).
 
@@ -171,7 +171,7 @@ hdt_call(Prefix, Base, Goal_1) :-
 
 hdt_root_(Root, Hdt) :-
   hdt_term(Hdt, subject, Root),
-  \+ hdt_triple(Hdt, _, _, Root).
+  \+ hdt_tp(Hdt, tp(_,_,Root)).
 
 
 
@@ -184,7 +184,7 @@ hdt_tree_triple_(Root, Triple, Hdt) :-
 
 hdt_tree_triple_(S, Hist1, Triple, Hdt) :-
   rdf_is_subject(S),
-  hdt_triple(Hdt, S, P, O),
+  hdt_tp(Hdt, tp(S,P,O)),
   (   Triple = rdf(S,P,O)
   ;   rdf_is_subject(O),
       ord_add_element(Hist1, O, Hist2),
@@ -200,7 +200,7 @@ hdt_tree_triples_(Root, Triples, Hdt) :-
 
 
 
-%! pagination(:Match_1, :Display_1, +Options:dict) is det.
+%! pagination(:Match_1, :Display_1, +Options:options) is det.
 
 pagination(Match_1, Display_1, Options) :-
   dict_get(page_number, Options, 1, First),
@@ -211,7 +211,7 @@ pagination(Match_1, Display_1, Options) :-
   Counter = count(First),
   findnsols(PageSize, Templ, offset(Offset, call(Match_1, Templ)), Results),
   Counter = count(PageNumber),
-  pp_page(
+  print_page(
     _{page_number: PageNumber, page_size: PageSize, results: Results},
     Display_1
   ),
@@ -220,11 +220,11 @@ pagination(Match_1, Display_1, Options) :-
 
 
 
-%! pp_directory(+Directory:atom) is det.
+%! print_directory(+Directory:atom) is det.
 %
 % Print the files in Dir.
 
-pp_directory(Dir) :-
+print_directory(Dir) :-
   forall(
     directory_file(Dir, File),
     ansi_format([fg(green)], "    ~a", [File])
@@ -232,21 +232,21 @@ pp_directory(Dir) :-
 
 
 
-%! pp_hash_directory(+Prefix:atom, +Finished:boolean, +Directory:atom) is det.
+%! print_hash_directory(+Prefix:atom, +Finished:boolean, +Directory:atom) is det.
 
-pp_hash_directory(Prefix, Fin, Dir) :-
+print_hash_directory(Prefix, Fin, Dir) :-
   format(current_output, "  ", []),
   ldfs_directory(Prefix, Fin, Dir, Hash),
   atom_concat(Prefix, Postfix, Hash),
   ansi_format([fg(green)], "~a|", [Prefix]),
   ansi_format([fg(red)], "~a", [Postfix]),
   ansi_format([fg(green)], ":  ", []),
-  pp_directory(Dir),
+  print_directory(Dir),
   nl.
 
 
 
-%! pp_page(+Page:dict, :Display_1) is det.
+%! print_page(+Page:dict, :Display_1) is det.
 %
 % Prints a Page from a paginated sequence, using Display_1 to print the
 % individual results.
@@ -261,7 +261,7 @@ pp_hash_directory(Prefix, Fin, Dir) :-
 % }
 % ```
 
-pp_page(Page, Display_1) :-
+print_page(Page, Display_1) :-
   dict_get(results, Page, [], Results),
   length(Results, NumResults),
   maplist(Display_1, Results),

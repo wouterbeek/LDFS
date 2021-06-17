@@ -19,17 +19,13 @@ struct(
   [B1-L1,…]             % blank node collections
 ```
 
----
-
-@author Wouter Beek
-@version 2018
 */
 
 :- use_module(library(apply)).
 :- use_module(library(lists)).
 
-:- use_module(library(semweb/rdf_prefix)).
-:- use_module(library(semweb/rdf_term)).
+:- use_module(library(rdf_prefix)).
+:- use_module(library(rdf_term)).
 
 :- rdf_meta
    ld_print_collection(o, ?),

@@ -58,10 +58,10 @@ compact(Base, ToFile) :-
   directory_file_path(Dir, Local, ToFile),
   write_to_file(
     ToFile,
-    {Local}/[Out]>>(
+    {Local}/[Out0]>>(
       forall(
         nquads_candidate_(Local, FromFile),
-        read_from_file(FromFile, {Out}/[In]>>copy_stream_data(In, Out))
+        read_from_file(FromFile, {Out0}/[In0]>>copy_stream_data(In0, Out0))
       )
     )
   ),
@@ -125,5 +125,5 @@ upload(meta) :-
 init_maintenance :-
   call_forall(
     alias_,
-    [Alias]>>rocks_init(Alias, [key(atom),mode(read_only),value(term)])
+    [Alias0]>>rocks_init(Alias0, [key(atom),mode(read_only),value(term)])
   ).
